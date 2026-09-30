@@ -1,0 +1,107 @@
+datasource db {
+  provider = "postgresql"
+  url      = env("DATABASE_URL")
+}
+
+generator client {
+  provider = "prisma-client-js"
+}
+
+enum Role {
+  USER
+  ADMIN
+}
+
+model User {
+  id           String    @id @default(uuid())
+  email        String    @unique
+  passwordHash String    @map("password_hash")
+  role         Role      @default(USER)
+  createdAt    DateTime  @default(now()) @map("created_at")
+  updatedAt    DateTime  @updatedAt @map("updated_at")
+
+  sessions     Session[]
+  urls         Url[]
+  groups       Group[]
+
+  @@map("users")
+}
+
+model Session {
+  id         String   @id @default(uuid())
+  userId     String   @map("user_id")
+  tokenHash  String   @unique @map("token_hash")
+  isRevoked  Boolean  @default(false) @map("is_revoked")
+  ipAddress  String?  @map("ip_address")
+  userAgent  String?  @map("user_agent")
+  expiresAt  DateTime @map("expires_at")
+  createdAt  DateTime @default(now()) @map("created_at")
+
+  user       User     @relation(fields: [userId], references: [id], onDelete: Cascade)
+
+  @@index([userId])
+  @@index([tokenHash])
+  @@map("sessions")
+}
+
+model Group {
+  id        String   @id @default(uuid())
+  userId    String   @map("user_id")
+  name      String
+  color     String   @default("#3B82F6")
+  createdAt DateTime @default(now()) @map("created_at")
+  updatedAt DateTime @updatedAt @map("updated_at")
+
+  user      User     @relation(fields: [userId], references: [id], onDelete: Cascade)
+  urls      Url[]
+
+  @@unique([userId, name])
+  @@map("groups")
+}
+
+model Url {
+  id          String     @id @default(uuid())
+  userId      String?    @map("user_id")
+  groupId     String?    @map("group_id")
+  originalUrl String     @map("original_url")
+  shortCode   String     @unique @map("short_code")
+  customAlias String?    @unique @map("custom_alias")
+  title       String?
+  isFavorite  Boolean    @default(false) @map("is_favorite")
+  isActive    Boolean    @default(true) @map("is_active")
+  isBanned    Boolean    @default(false) @map("is_banned")
+  banReason   String?    @map("ban_reason")
+  bannedAt    DateTime?  @map("banned_at")
+  bannedBy    String?    @map("banned_by")
+  expiresAt   DateTime?  @map("expires_at")
+  clickCount  Int        @default(0) @map("click_count")
+  createdAt   DateTime   @default(now()) @map("created_at")
+  updatedAt   DateTime   @updatedAt @map("updated_at")
+
+  user        User?      @relation(fields: [userId], references: [id], onDelete: SetNull)
+  group       Group?     @relation(fields: [groupId], references: [id], onDelete: SetNull)
+  rawClicks   RawClick[]
+
+  @@index([userId])
+  @@index([shortCode])
+  @@index([customAlias])
+  @@index([createdAt])
+  @@map("urls")
+}
+
+model RawClick {
+  id          String   @id @default(uuid())
+  urlId       String   @map("url_id")
+  clickedAt   DateTime @default(now()) @map("clicked_at")
+  ipAddress   String?  @map("ip_address")
+  userAgent   String?  @map("user_agent")
+  referrer    String?
+  isProcessed Boolean  @default(false) @map("is_processed")
+
+  url         Url      @relation(fields: [urlId], references: [id], onDelete: Cascade)
+
+  @@index([urlId])
+  @@index([isProcessed])
+  @@index([clickedAt])
+  @@map("raw_clicks")
+}
