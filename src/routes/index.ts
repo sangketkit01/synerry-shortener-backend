@@ -4,6 +4,7 @@ import { authRouter } from "./auth-route";
 import { userRouter } from "./user-route";
 import { adminRouter } from "./admin-route";
 import { internalRouter } from "./internal-route";
+import { analyticsRouter } from "./analytics-route";
 
 export const rootRouter = Router();
 
@@ -12,4 +13,5 @@ rootRouter.use("/public", publicRouter);
 rootRouter.use("/auth", authRouter);
 rootRouter.use("/user", userRouter);
 rootRouter.use("/admin", adminRouter);
+rootRouter.use("/analytics", analyticsRouter);
 rootRouter.use("/internal", internalRouter);

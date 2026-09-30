@@ -69,7 +69,7 @@ async function main() {
       title: "Synerry Official Website",
       isFavorite: true,
       isActive: true,
-      clickCount: 12,
+      clickCount: 0,
     },
   });
   console.log(`[Seed] Sample Short URL ready: ${sampleUrl.shortCode} -> ${sampleUrl.originalUrl}`);

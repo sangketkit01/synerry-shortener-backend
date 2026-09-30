@@ -44,17 +44,19 @@ export class UrlController {
 
       res.status(201).json({
         success: true,
-        message: result.isUpdated
-          ? "Existing URL updated with new short code"
+        message: result.isExisting
+          ? "Existing Short URL retrieved"
           : "Short URL created successfully",
         data: {
           url: result.url,
           shortUrl,
-          isUpdated: result.isUpdated,
+          isExisting: result.isExisting,
+          claimToken: (result.url as any).claimToken,
         },
       });
     } catch (error: any) {
-      res.status(400).json({
+      const status = error.message?.includes("suspended") ? 403 : 400;
+      res.status(status).json({
         success: false,
         message: error.message || "Failed to create short URL",
       });
@@ -77,7 +79,7 @@ export class UrlController {
       const url = await UrlService.resolveUrl(shortCode);
 
       if (!url) {
-        res.status(404).redirect(`${env.FRONTEND_URL}/status/not-found?code=${encodeURIComponent(shortCode)}`);
+        res.redirect(302, `${env.FRONTEND_URL}/status/not-found?code=${encodeURIComponent(shortCode)}`);
         return;
       }
 
@@ -132,12 +134,59 @@ export class UrlController {
         limit: limit ? parseInt(limit as string, 10) : 10,
       });
 
+      const urlsWithDomain = result.urls.map((u) => ({
+        ...u,
+        shortUrl: `${env.FRONTEND_URL}/s/${u.shortCode}`,
+      }));
+
       res.status(200).json({
         success: true,
-        data: result,
+        data: {
+          ...result,
+          urls: urlsWithDomain,
+        },
       });
     } catch (error: any) {
       res.status(500).json({ success: false, message: error.message || "Failed to fetch URLs" });
+    }
+  }
+
+  /**
+   * Updates an existing short URL.
+   */
+  static async update(req: Request, res: Response): Promise<void> {
+    try {
+      const userId = req.user!.userId;
+      const rawId = req.params.id;
+      const id = Array.isArray(rawId) ? rawId[0]! : rawId!;
+
+      const updateSchema = z.object({
+        title: z.string().optional().nullable(),
+        groupId: z.string().uuid().optional().nullable(),
+        expiresAt: z.string().datetime().optional().nullable(),
+        isActive: z.boolean().optional(),
+        qrColorDark: z.string().optional(),
+        qrColorLight: z.string().optional(),
+      });
+
+      const parsed = updateSchema.safeParse(req.body);
+      if (!parsed.success) {
+        res.status(400).json({ success: false, message: parsed.error.issues[0]?.message || "Validation error" });
+        return;
+      }
+
+      const updated = await UrlService.updateUrl(id, userId, parsed.data);
+      const urlWithDomain = {
+        ...updated,
+        shortUrl: `${env.FRONTEND_URL}/s/${updated.shortCode}`,
+      };
+      res.status(200).json({
+        success: true,
+        message: "URL updated successfully",
+        data: { url: urlWithDomain },
+      });
+    } catch (error: any) {
+      res.status(400).json({ success: false, message: error.message || "Failed to update URL" });
     }
   }
 
@@ -190,19 +239,22 @@ export class UrlController {
   }
 
   /**
-   * Claims guest URLs stored in localStorage on login.
+   * Claims guest URLs stored in localStorage on login with claim token verification.
    */
   static async syncGuestUrls(req: Request, res: Response): Promise<void> {
     try {
       const userId = req.user!.userId;
-      const { shortCodes } = req.body;
+      const { claims } = req.body;
 
-      if (!Array.isArray(shortCodes)) {
-        res.status(400).json({ success: false, message: "shortCodes must be an array" });
+      if (!Array.isArray(claims)) {
+        res.status(400).json({
+          success: false,
+          message: "claims array with shortCode and claimToken is required",
+        });
         return;
       }
 
-      const result = await UrlService.syncGuestUrls(shortCodes, userId);
+      const result = await UrlService.syncGuestUrls(claims, userId);
       res.status(200).json({ success: true, data: result });
     } catch (error: any) {
       res.status(500).json({ success: false, message: error.message || "Sync failed" });

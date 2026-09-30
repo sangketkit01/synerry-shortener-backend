@@ -1,9 +1,9 @@
 import rateLimit from "express-rate-limit";
 
-// Standard API rate limit (100 req per 15 min)
+// Standard API rate limit (1000 req per 15 min)
 export const apiLimiter = rateLimit({
   windowMs: 15 * 60 * 1000,
-  max: 100,
+  max: 1000,
   standardHeaders: true,
   legacyHeaders: false,
   message: { success: false, message: "Too many requests, please try again later." },
@@ -25,4 +25,13 @@ export const redirectLimiter = rateLimit({
   standardHeaders: true,
   legacyHeaders: false,
   message: { success: false, message: "Too many redirection requests." },
+});
+
+// Resource creation limiter (groups, bulk ops)
+export const resourceCreationLimiter = rateLimit({
+  windowMs: 15 * 60 * 1000,
+  max: 30,
+  standardHeaders: true,
+  legacyHeaders: false,
+  message: { success: false, message: "Too many resource creation requests, please try again later." },
 });

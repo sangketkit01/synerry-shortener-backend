@@ -51,3 +51,15 @@ export function isValidCustomAlias(alias: string): boolean {
   if (RESERVED_SLUGS.has(alias.toLowerCase())) return false;
   return /^[a-zA-Z0-9_-]+$/.test(alias);
 }
+
+/**
+ * Checks if target URL points back to our own domain or host to avoid infinite loops.
+ */
+export function isSelfReferencingUrl(urlString: string, ownHosts: string[] = ["localhost", "127.0.0.1"]): boolean {
+  try {
+    const parsed = new URL(urlString.trim());
+    return ownHosts.some((h) => parsed.hostname === h || parsed.hostname.endsWith(`.${h}`));
+  } catch {
+    return false;
+  }
+}

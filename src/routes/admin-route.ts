@@ -1,20 +1,21 @@
 import { Router } from "express";
 import { authenticate } from "../middlewares/auth.middleware";
 import { requireRole } from "../middlewares/rbac.middleware";
+import { AdminController } from "../controllers/admin.controller";
 
 export const adminRouter = Router();
 
-// Protect all admin routes with auth and ADMIN role exclusively
+// Protect all admin routes exclusively for authenticated users with ADMIN role
 adminRouter.use(authenticate, requireRole("ADMIN"));
 
-adminRouter.get("/overview", (_req, res) => {
-  res.json({ message: "Admin system overview placeholder" });
-});
+// Overview & User Management
+adminRouter.get("/overview", AdminController.overview);
+adminRouter.get("/users", AdminController.listUsers);
+adminRouter.patch("/users/:id/ban", AdminController.banUser);
+adminRouter.patch("/users/:id/unban", AdminController.unbanUser);
 
-adminRouter.get("/urls", (_req, res) => {
-  res.json({ message: "Admin all URLs list placeholder" });
-});
-
-adminRouter.patch("/urls/:id/ban", (_req, res) => {
-  res.json({ message: "Admin ban link placeholder" });
-});
+// Moderation URLs
+adminRouter.get("/urls", AdminController.listAllUrls);
+adminRouter.patch("/urls/:id/ban", AdminController.banUrl);
+adminRouter.patch("/urls/:id/unban", AdminController.unbanUrl);
+adminRouter.delete("/urls/:id", AdminController.deleteUrl);
