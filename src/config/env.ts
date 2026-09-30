@@ -14,7 +14,13 @@ const envSchema = z.object({
   JWT_REFRESH_EXPIRES_IN: z.string().default("7d"),
   INTERNAL_PIPELINE_KEY: z.string().min(16, "INTERNAL_PIPELINE_KEY is required"),
   FRONTEND_URL: z.string().default("http://localhost:3000"),
-  ANALYTICS_SERVICE_URL: z.string().default("http://analytics-service:8000"),
+  ANALYTICS_SERVICE_URL: z
+    .string()
+    .default(
+      process.env.NODE_ENV === "production"
+        ? "http://analytics-service:8000"
+        : "http://127.0.0.1:8000"
+    ),
 });
 
 export const env = envSchema.parse(process.env);
