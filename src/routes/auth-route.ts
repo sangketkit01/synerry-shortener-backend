@@ -1,22 +1,12 @@
 import { Router } from "express";
+import { AuthController } from "../controllers/auth.controller";
 import { authLimiter } from "../middlewares/rate-limit.middleware";
+import { authenticate } from "../middlewares/auth.middleware";
 
 export const authRouter = Router();
 
-authRouter.use(authLimiter);
-
-authRouter.post("/register", (_req, res) => {
-  res.json({ message: "Register endpoint placeholder" });
-});
-
-authRouter.post("/login", (_req, res) => {
-  res.json({ message: "Login endpoint placeholder" });
-});
-
-authRouter.post("/refresh-token", (_req, res) => {
-  res.json({ message: "Refresh token rotation endpoint placeholder" });
-});
-
-authRouter.post("/logout", (_req, res) => {
-  res.json({ message: "Logout endpoint placeholder" });
-});
+authRouter.post("/register", authLimiter, AuthController.register);
+authRouter.post("/login", authLimiter, AuthController.login);
+authRouter.post("/refresh-token", AuthController.refreshToken);
+authRouter.post("/logout", AuthController.logout);
+authRouter.get("/me", authenticate, AuthController.me);
