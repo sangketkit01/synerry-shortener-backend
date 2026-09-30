@@ -5,7 +5,7 @@ import { env } from "../config/env";
 
 export const analyticsRouter = Router();
 
-const ANALYTICS_SERVICE_URL = process.env.ANALYTICS_SERVICE_URL || "http://localhost:8000";
+const ANALYTICS_SERVICE_URL = env.ANALYTICS_SERVICE_URL || process.env.ANALYTICS_SERVICE_URL || "http://analytics-service:8000";
 
 // Protect all analytics routes with authentication
 analyticsRouter.use(authenticate);
