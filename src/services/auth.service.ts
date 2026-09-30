@@ -71,6 +71,20 @@ export class AuthService {
       throw new Error("Invalid email or password");
     }
 
+    if (user.isBanned) {
+      await prisma.session.updateMany({
+        where: { userId: user.id },
+        data: { isRevoked: true },
+      });
+
+      const reason = user.banReason
+        ? `Your account has been suspended: ${user.banReason}`
+        : "Your account has been suspended by an administrator.";
+      const error: any = new Error(reason);
+      error.statusCode = 403;
+      throw error;
+    }
+
     const payload = { userId: user.id, email: user.email, role: user.role };
     const accessToken = signAccessToken(payload);
     const refreshToken = signRefreshToken(payload);
@@ -135,6 +149,20 @@ export class AuthService {
     });
     if (!user) {
       throw new Error("User no longer exists");
+    }
+
+    if (user.isBanned) {
+      await prisma.session.updateMany({
+        where: { userId: user.id },
+        data: { isRevoked: true },
+      });
+
+      const reason = user.banReason
+        ? `Your account has been suspended: ${user.banReason}`
+        : "Your account has been suspended by an administrator.";
+      const error: any = new Error(reason);
+      error.statusCode = 403;
+      throw error;
     }
 
     // Issue new pair

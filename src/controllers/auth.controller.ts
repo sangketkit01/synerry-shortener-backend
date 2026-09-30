@@ -75,7 +75,8 @@ export class AuthController {
         },
       });
     } catch (error: any) {
-      res.status(401).json({ success: false, message: error.message || "Authentication failed" });
+      const statusCode = error.statusCode || 401;
+      res.status(statusCode).json({ success: false, message: error.message || "Authentication failed" });
     }
   }
 
@@ -105,7 +106,8 @@ export class AuthController {
       });
     } catch (error: any) {
       res.clearCookie("refreshToken", COOKIE_OPTIONS);
-      res.status(401).json({ success: false, message: error.message || "Token refresh failed" });
+      const statusCode = error.statusCode || 401;
+      res.status(statusCode).json({ success: false, message: error.message || "Token refresh failed" });
     }
   }
 
