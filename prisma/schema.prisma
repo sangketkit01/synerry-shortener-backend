@@ -21,7 +21,8 @@ model User {
   updatedAt    DateTime  @updatedAt @map("updated_at")
 
   sessions     Session[]
-  urls         Url[]
+  urls         Url[]     @relation("UserUrls")
+  bannedUrls   Url[]     @relation("AdminBannedUrls")
   groups       Group[]
 
   @@map("users")
@@ -60,29 +61,33 @@ model Group {
 }
 
 model Url {
-  id          String     @id @default(uuid())
-  userId      String?    @map("user_id")
-  groupId     String?    @map("group_id")
-  originalUrl String     @map("original_url")
-  shortCode   String     @unique @map("short_code")
-  customAlias String?    @unique @map("custom_alias")
-  title       String?
-  isFavorite  Boolean    @default(false) @map("is_favorite")
-  isActive    Boolean    @default(true) @map("is_active")
-  isBanned    Boolean    @default(false) @map("is_banned")
-  banReason   String?    @map("ban_reason")
-  bannedAt    DateTime?  @map("banned_at")
-  bannedBy    String?    @map("banned_by")
-  expiresAt   DateTime?  @map("expires_at")
-  clickCount  Int        @default(0) @map("click_count")
-  createdAt   DateTime   @default(now()) @map("created_at")
-  updatedAt   DateTime   @updatedAt @map("updated_at")
+  id           String     @id @default(uuid())
+  userId       String?    @map("user_id")
+  groupId      String?    @map("group_id")
+  originalUrl  String     @map("original_url")
+  shortCode    String     @unique @map("short_code")
+  customAlias  String?    @unique @map("custom_alias")
+  title        String?
+  isFavorite   Boolean    @default(false) @map("is_favorite")
+  isActive     Boolean    @default(true) @map("is_active")
+  isBanned     Boolean    @default(false) @map("is_banned")
+  banReason    String?    @map("ban_reason")
+  bannedAt     DateTime?  @map("banned_at")
+  bannedById   String?    @map("banned_by_id")
+  expiresAt    DateTime?  @map("expires_at")
+  clickCount   Int        @default(0) @map("click_count")
+  qrColorDark  String     @default("#000000") @map("qr_color_dark")
+  qrColorLight String     @default("#ffffff") @map("qr_color_light")
+  createdAt    DateTime   @default(now()) @map("created_at")
+  updatedAt    DateTime   @updatedAt @map("updated_at")
 
-  user        User?      @relation(fields: [userId], references: [id], onDelete: SetNull)
-  group       Group?     @relation(fields: [groupId], references: [id], onDelete: SetNull)
-  rawClicks   RawClick[]
+  user         User?      @relation("UserUrls", fields: [userId], references: [id], onDelete: SetNull)
+  bannedBy     User?      @relation("AdminBannedUrls", fields: [bannedById], references: [id], onDelete: SetNull)
+  group        Group?     @relation(fields: [groupId], references: [id], onDelete: SetNull)
+  rawClicks    RawClick[]
 
   @@index([userId])
+  @@index([userId, isFavorite])
   @@index([shortCode])
   @@index([customAlias])
   @@index([createdAt])
@@ -96,6 +101,7 @@ model RawClick {
   ipAddress   String?  @map("ip_address")
   userAgent   String?  @map("user_agent")
   referrer    String?
+  country     String?
   isProcessed Boolean  @default(false) @map("is_processed")
 
   url         Url      @relation(fields: [urlId], references: [id], onDelete: Cascade)
