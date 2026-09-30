@@ -125,10 +125,10 @@ analyticsRouter.get("/pipeline/status", async (req, res) => {
   }
 });
 
-// On-demand pipeline trigger (Only accessible by Administrator)
+// On-demand pipeline trigger (Accessible by authenticated users for manual refresh sync)
 analyticsRouter.post("/pipeline/trigger", async (req, res) => {
-  if (req.user?.role !== "ADMIN") {
-    res.status(403).json({ success: false, message: "Forbidden: Admin role required" });
+  if (!req.user?.userId) {
+    res.status(401).json({ success: false, message: "Unauthorized: Login required" });
     return;
   }
 
