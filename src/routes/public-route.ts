@@ -1,4 +1,5 @@
 import { Router } from "express";
+import { UrlController } from "../controllers/url.controller";
 import { redirectLimiter } from "../middlewares/rate-limit.middleware";
 
 export const publicRouter = Router();
@@ -8,9 +9,8 @@ publicRouter.get("/health", (_req, res) => {
   res.json({ status: "ok", timestamp: new Date().toISOString() });
 });
 
-// Short URL redirection placeholder (high-throughput route)
-publicRouter.get("/s/:shortCode", redirectLimiter, (req, res) => {
-  const { shortCode } = req.params;
-  // Redirection business logic will be implemented here
-  res.json({ message: "Redirect endpoint", shortCode });
-});
+// Guest URL shortening
+publicRouter.post("/shorten", UrlController.create);
+
+// High-speed short URL redirection (e.g. /s/:shortCode)
+publicRouter.get("/s/:shortCode", redirectLimiter, UrlController.redirect);
